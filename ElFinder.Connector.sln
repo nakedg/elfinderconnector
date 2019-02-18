@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.271
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElFinder.Connector", "ElFinder.Connector\ElFinder.Connector.csproj", "{89FDC40D-DF08-417A-A493-E619D715177B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "web", "web\web.csproj", "{1E052391-187B-4BB4-9E67-7B0C5B575B72}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{89FDC40D-DF08-417A-A493-E619D715177B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89FDC40D-DF08-417A-A493-E619D715177B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89FDC40D-DF08-417A-A493-E619D715177B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89FDC40D-DF08-417A-A493-E619D715177B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E052391-187B-4BB4-9E67-7B0C5B575B72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E052391-187B-4BB4-9E67-7B0C5B575B72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E052391-187B-4BB4-9E67-7B0C5B575B72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E052391-187B-4BB4-9E67-7B0C5B575B72}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2C102688-C62B-436D-8F28-520DAC687B92}
+	EndGlobalSection
+EndGlobal
