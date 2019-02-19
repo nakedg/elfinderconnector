@@ -3,14 +3,22 @@ elfinder connector for .Net core
 Implement connetor for elfinder 2.1.
 Use example
   In configure services:
-  services.AddElFinderConnector(options => {
-    options.ConnectorUrl = "/connector";
-  });
+        
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            services.AddElFinderConnector(options => {
+                options.ConnectorUrl = "/connector";
+            });
+           
+        }
   
   In Configure
+        
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            ...
+            // standart code
 
             app.UseStaticFiles();
             app.UseCookiePolicy();
