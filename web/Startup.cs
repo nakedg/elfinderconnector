@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ElFinder.Connector.Volume;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -13,12 +14,14 @@ namespace web
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
             Configuration = configuration;
+            Environment = env;
         }
 
         public IConfiguration Configuration { get; }
+        public IHostingEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -33,9 +36,18 @@ namespace web
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            services.AddElFinderConnector(options => {
-                options.ConnectorUrl = "/connector";
-            });
+            var rootPathElfinder = System.IO.Path.Combine(Environment.WebRootPath, "files");
+
+            services
+                .AddElFinderDefaultFactory(options => {
+                    options.Volumes = new IVolume<IVolumeDriver>[] {
+                         new Volume<FsVolumeDriver>(new FsVolumeDriver(rootPathElfinder))
+                    };
+                })
+                .AddElFinderConnector(options => {
+                    options.ConnectorUrl = "/connector";
+                });
+
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(p =>
@@ -47,9 +59,9 @@ namespace web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app)
         {
-            if (env.IsDevelopment())
+            if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }

@@ -1,7 +1,6 @@
 ﻿using System;
 using ElFinder.Connector;
 using ElFinder.Connector.Volume;
-using ElFinder.Connector.Volume.Default;
 
 namespace Microsoft.Extensions.DependencyInjection
 
@@ -16,7 +15,20 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingleton<Connector>();
-            services.AddTransient<IPathHasher, DefaultPathHasher>();
+            //services.AddTransient<IPathHasher, DefaultPathHasher>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddElFinderDefaultFactory(this IServiceCollection services, Action<DefaultElFinderFactoryOptions> options)
+        {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            services.Configure(options);
+            services.AddSingleton<IElFinderFactory, DefaultElFinderFactory>();
 
             return services;
         }

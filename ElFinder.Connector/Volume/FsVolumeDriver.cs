@@ -12,6 +12,17 @@ namespace ElFinder.Connector.Volume
         public FsVolumeDriver(string root)
         {
             Root = root;
+
+            Init();
+
+        }
+
+        private void Init()
+        {
+            if (!Directory.Exists(Root))
+            {
+                Directory.CreateDirectory(Root);
+            }
         }
 
         public string Prefix { get; set; } = "l";
@@ -26,19 +37,7 @@ namespace ElFinder.Connector.Volume
             {
                 DirectoryInfo di = new DirectoryInfo(fullPath);
 
-                var cwd = new DirectoryEntry
-                {
-                    CanRead = true,
-                    CanWrite = true,
-                    HasSubDirectories = 
-                    di.GetDirectories().Length > 0,
-                    Name = di.Name,
-                    Path = GetRelativePath(Root, di.FullName),
-                    ParentPath = GetRelativePath(Root, di.Parent?.FullName),
-                    LastModified = di.LastWriteTime
-                };
-
-                
+                var cwd = Convert(di);
 
                 return cwd;
             }
@@ -67,33 +66,14 @@ namespace ElFinder.Connector.Volume
                     {
                         var d = item as DirectoryInfo;
 
-                        var dir = new DirectoryEntry
-                        {
-                            CanRead = true,
-                            CanWrite = true,
-                            HasSubDirectories =
-                            d.GetDirectories().Length > 0,
-                            Name = d.Name,
-                            Path = GetRelativePath(Root, d.FullName),
-                            ParentPath = GetRelativePath(Root, d.Parent?.FullName),
-                            LastModified = d.LastWriteTime
-                        };
+                        var dir = Convert(d);
                         baseEntrys.Add(dir);
                     }
                     else
                     {
                         var f = item as FileInfo;
 
-                        var file = new FileEntry
-                        {
-                            CanRead = true,
-                            CanWrite = true,
-                            Name = f.Name,
-                            Path = GetRelativePath(Root, f.FullName),
-                            ParentPath = GetRelativePath(Root, f.DirectoryName),
-                            Size = f.Length,
-                            LastModified = f.LastWriteTime
-                        };
+                        var file = Convert(f);
 
                         baseEntrys.Add(file);
                     }
@@ -182,16 +162,7 @@ namespace ElFinder.Connector.Volume
 
                     foreach (var d in dirs)
                     {
-                        result.Add(new DirectoryEntry
-                        {
-                            CanRead = true,
-                            CanWrite = true,
-                            HasSubDirectories = d.GetDirectories().Length > 0,
-                            Name = d.Name,
-                            Path = GetRelativePath(Root, d.FullName),
-                            ParentPath = GetRelativePath(Root, d.Parent?.FullName),
-                            LastModified = d.LastWriteTime
-                        });
+                        result.Add(Convert(d));
 
                     }
 
@@ -199,16 +170,7 @@ namespace ElFinder.Connector.Volume
                 }
                 else
                 {
-                    result.Add(new DirectoryEntry
-                    {
-                        CanRead = true,
-                        CanWrite = true,
-                        HasSubDirectories = item.GetDirectories().Length > 0,
-                        Name = item.Name,
-                        Path = GetRelativePath(Root, item.FullName),
-                        ParentPath = GetRelativePath(Root, item.Parent?.FullName),
-                        LastModified = item.LastWriteTime
-                    });
+                    result.Add(Convert(item));
                 }
 
             }
@@ -244,18 +206,65 @@ namespace ElFinder.Connector.Volume
 
             var f = new FileInfo(filepath);
 
-            var file = new FileEntry
-            {
-                CanRead = true,
-                CanWrite = true,
-                Name = f.Name,
-                Path = GetRelativePath(Root, f.FullName),
-                ParentPath = GetRelativePath(Root, f.DirectoryName),
-                Size = f.Length,
-                LastModified = f.LastWriteTime
-            };
+            var file = Convert(f);
 
             return file;
+        }
+
+        public BaseFsEntry Rename(string path, string newName)
+        {
+            var fullpath = GetFullPath(path);
+
+            if (File.Exists(fullpath))
+            {
+                //file rename
+                FileInfo fi = new FileInfo(fullpath);
+
+                var newFullpath = Path.Combine(fi.DirectoryName, newName);
+
+                var removed = Convert(fi);
+
+                fi.MoveTo(newFullpath);
+
+                FileInfo newFi = new FileInfo(newFullpath);
+                return Convert(newFi);
+            }
+            else if (Directory.Exists(fullpath))
+            {
+                //directory rename
+                DirectoryInfo di = new DirectoryInfo(fullpath);
+
+                var newPath = Path.Combine(di.Parent.FullName, newName);
+
+                di.MoveTo(newPath);
+
+                var newDi = new DirectoryInfo(newPath);
+
+                return Convert(newDi);
+            }
+            else
+            {
+                throw new FileNotFoundException("Directory or file not found", fullpath);
+            }
+        }
+
+        public void Delete(string path)
+        {
+            var fullpath = GetFullPath(path);
+
+            if (Directory.Exists(fullpath))
+            {
+                Directory.Delete(fullpath, true);
+            }
+            else if (File.Exists(fullpath))
+            {
+                File.Delete(fullpath);
+            }
+            else
+            {
+                throw new FileNotFoundException("Directory or file not found", fullpath);
+            }
+
         }
 
         private string GetRelativePath(string relativeTo, string path)
@@ -278,6 +287,34 @@ namespace ElFinder.Connector.Volume
             }
 
             return Path.Combine(Root, relativePath);
+        }
+
+        private FileEntry Convert(FileInfo file)
+        {
+            return new FileEntry
+            {
+                CanRead = true,
+                CanWrite = true,
+                Name = file.Name,
+                Path = GetRelativePath(Root, file.FullName),
+                ParentPath = GetRelativePath(Root, file.DirectoryName),
+                Size = file.Length,
+                LastModified = file.LastWriteTime
+            };
+        }
+
+        private DirectoryEntry Convert(DirectoryInfo dir)
+        {
+            return new DirectoryEntry
+            {
+                CanRead = true,
+                CanWrite = true,
+                HasSubDirectories = dir.GetDirectories().Length > 0,
+                Name = dir.Name,
+                Path = GetRelativePath(Root, dir.FullName),
+                ParentPath = GetRelativePath(Root, dir.Parent?.FullName),
+                LastModified = dir.LastWriteTime
+            };
         }
 
     }

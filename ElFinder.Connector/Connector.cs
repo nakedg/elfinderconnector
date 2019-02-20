@@ -11,8 +11,13 @@ namespace ElFinder.Connector
 {
     public class Connector
     {
+        private readonly IElFinderFactory _elFinderFactory;
 
-        private readonly ElFinder _elFinder = new ElFinder();
+        public Connector(IElFinderFactory elFinderFactory)
+        {
+            _elFinderFactory = elFinderFactory;
+        }
+        
 
         public async Task ProcessRequest(HttpContext context)
         {
@@ -44,8 +49,8 @@ namespace ElFinder.Connector
                 }
             }*/
 
-
-            var cmd = Command.CommandFactory.CreateCommand(cmdName, values, _elFinder, files);
+            var elFinder = _elFinderFactory.Create();
+            var cmd = Command.CommandFactory.CreateCommand(cmdName, values, elFinder, files);
             var result = cmd.Execute();
             await result.WriteAsync(context);
         }

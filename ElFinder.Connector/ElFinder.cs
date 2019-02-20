@@ -11,12 +11,12 @@ namespace ElFinder.Connector
     {
         public ElFinder()
         {
-            Volumes = new IVolume<IVolumeDriver>[] {
+            /*Volumes = new IVolume<IVolumeDriver>[] {
                 new Volume<FsVolumeDriver>(new FsVolumeDriver("c:\\temp"))
-            };
+            };*/
         }
 
-        public IVolume<IVolumeDriver>[] Volumes { get; private set; }
+        public IVolume<IVolumeDriver>[] Volumes { get; set; }
 
         public IVolume<IVolumeDriver> Default
         {

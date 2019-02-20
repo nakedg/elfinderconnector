@@ -20,6 +20,10 @@ namespace ElFinder.Connector.Volume
         Fs.FsBase[] GetParents(string hash, string until);
 
         Fs.FsBase Upload(string hashPath, string name, System.IO.Stream stream);
+
+        Fs.FsBase Rename(string hash, string newName);
+
+        void Delete(string hash);
     }
 
     public class Volume<T>: IVolume<T> where T: class, IVolumeDriver
@@ -120,6 +124,22 @@ namespace ElFinder.Connector.Volume
             CheckVolumeIdInHash(hashPath);
 
             return CreateElFinderFsItem(_volumeDriver.Upload(GetPath(hashPath), name, stream));
+        }
+
+        public Fs.FsBase Rename(string hash, string newName)
+        {
+            CheckVolumeIdInHash(hash);
+
+            var added = _volumeDriver.Rename(GetPath(hash), newName);
+
+            return CreateElFinderFsItem(added);
+        }
+
+        public void Delete(string hash)
+        {
+            CheckVolumeIdInHash(hash);
+
+            _volumeDriver.Delete(GetPath(hash));
         }
 
         private string GetMimeType(BaseFsEntry fsEntry)

@@ -15,5 +15,9 @@ namespace ElFinder.Connector.Volume
         BaseFsEntry[] GetParents(string path, string untilPath);
 
         BaseFsEntry Upload(string path, string name, System.IO.Stream stream);
+
+        BaseFsEntry Rename(string path, string newName);
+
+        void Delete(string path);
     }
 }

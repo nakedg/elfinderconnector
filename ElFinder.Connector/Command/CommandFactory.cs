@@ -26,6 +26,10 @@ namespace ElFinder.Connector.Command
                     return new UploadCommand(cmdParams, elFinder, files);
                 case "ls":
                     return new LsCommand(cmdParams, elFinder);
+                case "rename":
+                    return new RenameCommand(cmdParams, elFinder);
+                case "rm":
+                    return new RmCommand(cmdParams, elFinder);
                 default:
                     throw new InvalidOperationException($"Command not found. Command name: {name}");
             }
