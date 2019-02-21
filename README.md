@@ -10,12 +10,12 @@ Use example
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 			
-			var rootPathElfinder = System.IO.Path.Combine(Environment.WebRootPath, "files");
+	    var rootPathElfinder = System.IO.Path.Combine(Environment.WebRootPath, "files");
 			
             services
                 .AddElFinderDefaultFactory(options => {
-                    options.Volumes = new IVolume<IVolumeDriver>[] {
-                         new Volume<FsVolumeDriver>(new FsVolumeDriver(rootPathElfinder))
+                    options.Volumes = new Volume[] {
+                         new Volume(new FsVolumeDriver(rootPathElfinder))
                     };
                 })
                 .AddElFinderConnector(options => {
@@ -43,9 +43,11 @@ Use example
             });
         }
  
-	Partially implement driver for local file system
 	
-	It is planned to implement a driver for the yandex disk
+Partially implement driver for local file system
+	
+It is planned to implement a driver for the yandex disk
+ 
  
  Реализован еще не весь api.
  Реализованные команды:
@@ -58,3 +60,4 @@ Use example
  7. upload
  8. rename
  9. rm
+ 10. size
