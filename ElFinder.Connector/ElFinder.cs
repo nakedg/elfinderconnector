@@ -16,9 +16,9 @@ namespace ElFinder.Connector
             };*/
         }
 
-        public IVolume<IVolumeDriver>[] Volumes { get; set; }
+        public Volume.Volume[] Volumes { get; set; }
 
-        public IVolume<IVolumeDriver> Default
+        public Volume.Volume Default
         {
             get
             {
@@ -31,7 +31,7 @@ namespace ElFinder.Connector
             }
         }
 
-        public IVolume<IVolumeDriver> GetVolume(string hash)
+        public Volume.Volume GetVolume(string hash)
         {
             if (string.IsNullOrEmpty(hash))
             {

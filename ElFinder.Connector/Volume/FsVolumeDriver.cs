@@ -267,6 +267,53 @@ namespace ElFinder.Connector.Volume
 
         }
 
+        public FsItemSize GetSize(string path)
+        {
+            var fullpath = GetFullPath(path);
+
+            if (File.Exists(fullpath))
+            {
+                FileInfo fi = new FileInfo(fullpath);
+                return new FsItemSize { FileCount = 1, DirectoryCount = 0, Size = fi.Length };
+            }
+            else if (Directory.Exists(fullpath))
+            {
+                DirectoryInfo di = new DirectoryInfo(fullpath);
+                return CalculateDirectorySize(di);
+            }
+            else
+            {
+                throw new FileNotFoundException("Directory or file not found", fullpath);
+            }
+        }
+
+        private FsItemSize CalculateDirectorySize(DirectoryInfo di)
+        {
+            Stack<DirectoryInfo> stack = new Stack<DirectoryInfo>();
+            stack.Push(di);
+
+            FsItemSize result = new FsItemSize();
+
+            while (stack.Count > 0)
+            {
+                var dir = stack.Pop();
+                result.DirectoryCount++;
+                foreach (var file in dir.EnumerateFiles())
+                {
+                    result.Size += file.Length;
+                    result.FileCount++;
+                }
+
+                foreach (var item in dir.EnumerateDirectories())
+                {
+                    //result.DirectoryCount++;
+                    stack.Push(item);
+                }
+            }
+
+            return result;
+        }
+
         private string GetRelativePath(string relativeTo, string path)
         {
             if (path.StartsWith(relativeTo))

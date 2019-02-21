@@ -30,6 +30,8 @@ namespace ElFinder.Connector.Command
                     return new RenameCommand(cmdParams, elFinder);
                 case "rm":
                     return new RmCommand(cmdParams, elFinder);
+                case "size":
+                    return new SizeCommand(cmdParams, elFinder);
                 default:
                     throw new InvalidOperationException($"Command not found. Command name: {name}");
             }

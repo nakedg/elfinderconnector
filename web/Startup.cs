@@ -40,8 +40,8 @@ namespace web
 
             services
                 .AddElFinderDefaultFactory(options => {
-                    options.Volumes = new IVolume<IVolumeDriver>[] {
-                         new Volume<FsVolumeDriver>(new FsVolumeDriver(rootPathElfinder))
+                    options.Volumes = new Volume[] {
+                         new Volume(new FsVolumeDriver(rootPathElfinder))
                     };
                 })
                 .AddElFinderConnector(options => {

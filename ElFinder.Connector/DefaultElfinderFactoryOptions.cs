@@ -7,6 +7,6 @@ namespace ElFinder.Connector
 {
     public class DefaultElFinderFactoryOptions
     {
-        public IVolume<IVolumeDriver>[] Volumes { get; set; }
+        public Volume.Volume[] Volumes { get; set; }
     }
 }

@@ -6,39 +6,20 @@ using System.Linq;
 
 namespace ElFinder.Connector.Volume
 {
-    public interface IVolume<out T> where T : class, IVolumeDriver
-    {
-        string VolumeId { get; }
-        bool CanRead { get; set; }
-        string DefaultPath { get; }
-        Fs.FsRoot Root { get; }
 
-        Fs.FsBase GetCurrentWorkingDirectory(string hash);
-        Fs.FsBase[] GetDirectoryItems(string hash);
-        Fs.FsDirectory CreateDirectory(string hash, string name);
-        (System.IO.Stream, string) GetFile(string hash);
-        Fs.FsBase[] GetParents(string hash, string until);
-
-        Fs.FsBase Upload(string hashPath, string name, System.IO.Stream stream);
-
-        Fs.FsBase Rename(string hash, string newName);
-
-        void Delete(string hash);
-    }
-
-    public class Volume<T>: IVolume<T> where T: class, IVolumeDriver
+    public class Volume
     {
         private static int _counter = 0;
         private readonly string _volumeId;
-        private readonly T _volumeDriver;
+        private readonly IVolumeDriver _volumeDriver;
 
-        public Volume(T volumeDriver)
+        public Volume(IVolumeDriver volumeDriver)
             :this(volumeDriver, null)
         {
             
         }
 
-        public Volume(T volumeDriver, string volumeId)
+        public Volume(IVolumeDriver volumeDriver, string volumeId)
         {
             _volumeId = volumeId ?? (_counter++).ToString();
             _volumeDriver = volumeDriver;
@@ -140,6 +121,13 @@ namespace ElFinder.Connector.Volume
             CheckVolumeIdInHash(hash);
 
             _volumeDriver.Delete(GetPath(hash));
+        }
+
+        public FsItemSize GetSize(string hash)
+        {
+            CheckVolumeIdInHash(hash);
+
+            return _volumeDriver.GetSize(GetPath(hash));
         }
 
         private string GetMimeType(BaseFsEntry fsEntry)

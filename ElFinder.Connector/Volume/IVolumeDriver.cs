@@ -19,5 +19,7 @@ namespace ElFinder.Connector.Volume
         BaseFsEntry Rename(string path, string newName);
 
         void Delete(string path);
+
+        FsItemSize GetSize(string path);
     }
 }
