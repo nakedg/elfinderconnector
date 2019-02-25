@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.0.3</Version>
+    <Authors>Galenko Oleg</Authors>
+    <PackageId>Nakedg.ElFinder.Connector</PackageId>
+    <PackageProjectUrl>https://github.com/nakedg/elfinderconnector</PackageProjectUrl>
+    <Description>ElFinder connector for .net core</Description>
+    <RepositoryUrl>https://github.com/nakedg/elfinderconnector</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
