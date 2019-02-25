@@ -8,10 +8,12 @@ namespace ElFinder.Connector
     public class DefaultElFinderFactory : IElFinderFactory
     {
         public IOptions<DefaultElFinderFactoryOptions> Options { get; }
+        public Image.IImageProcessor ImageProcessor { get; }
 
-        public DefaultElFinderFactory(IOptions<DefaultElFinderFactoryOptions> options)
+        public DefaultElFinderFactory(IOptions<DefaultElFinderFactoryOptions> options, Image.IImageProcessor imageProcessor)
         {
-            this.Options = options;
+            Options = options;
+            ImageProcessor = imageProcessor;
         }
 
         private static object _sync = new object();
@@ -28,7 +30,8 @@ namespace ElFinder.Connector
                     {
                         _elFinder = new ElFinder
                         {
-                            Volumes = Options.Value.Volumes
+                            Volumes = Options.Value.Volumes,
+                            ImageProcessor = ImageProcessor
                         };
                     }
                 }

@@ -8,5 +8,7 @@ namespace ElFinder.Connector
     public class DefaultElFinderFactoryOptions
     {
         public Volume.Volume[] Volumes { get; set; }
+
+        public string TmbPath { get; set; }
     }
 }

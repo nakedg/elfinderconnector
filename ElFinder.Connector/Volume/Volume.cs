@@ -3,6 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+
 
 namespace ElFinder.Connector.Volume
 {
@@ -23,13 +26,20 @@ namespace ElFinder.Connector.Volume
         {
             _volumeId = volumeId ?? (_counter++).ToString();
             _volumeDriver = volumeDriver;
+            Options = new Fs.RootOptions();
         }
+
+        public ElFinder ElFinder { get; set; }
+
+        public Fs.RootOptions Options { get; set; }
 
         public string VolumeId => $"{_volumeDriver.Prefix}{_volumeId}_";
 
         public bool CanRead { get; set; } = true;
 
         public string DefaultPath => GetHash("");
+
+        public string ThumbnailPath { get; set; }
 
         private Fs.FsRoot _root;
         public Fs.FsRoot Root {
@@ -130,6 +140,33 @@ namespace ElFinder.Connector.Volume
             return _volumeDriver.GetSize(GetPath(hash));
         }
 
+        public string CreateTmb(System.IO.Stream stream, string filename)
+        {
+            if (!System.IO.Directory.Exists(ThumbnailPath))
+            {
+                System.IO.Directory.CreateDirectory(ThumbnailPath);
+            }
+
+            string md5 = GetMD5(stream);
+            string tmbName = $"{md5}{System.IO.Path.GetExtension(filename)}";
+
+            using (var image = ElFinder.ImageProcessor.Load(stream))
+            using (var ms = image.Resize(80, 80))
+            using (System.IO.FileStream fs = new System.IO.FileStream(System.IO.Path.Combine(ThumbnailPath, tmbName), System.IO.FileMode.Create))
+            {
+                ms.Seek(0, System.IO.SeekOrigin.Begin);
+
+                ms.CopyTo(fs);
+
+                return tmbName;
+            }
+        }
+
+        private bool IsImage(string mime)
+        {
+            return mime.ToLower().Contains("image");
+        }
+
         private string GetMimeType(BaseFsEntry fsEntry)
         {
             if (fsEntry.IsDirectory())
@@ -174,6 +211,40 @@ namespace ElFinder.Connector.Volume
             }
         }
 
+        private string GetMD5(System.IO.Stream data)
+        {
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                data.Seek(0, System.IO.SeekOrigin.Begin);
+                var hash = md5.ComputeHash(data);
+                return BitConverter.ToString(hash).Replace("-", "");
+            }
+        }
+
+        private string GetTmb(System.IO.Stream stream, string filename)
+        {
+            if (!System.IO.Directory.Exists(ThumbnailPath))
+            {
+                System.IO.Directory.CreateDirectory(ThumbnailPath);
+                return "1";
+            }
+
+            string md5 = GetMD5(stream);
+            string tmbName = $"{md5}{System.IO.Path.GetExtension(filename)}";
+
+            if (System.IO.File.Exists(System.IO.Path.Combine(ThumbnailPath, tmbName)))
+            {
+                return tmbName;
+            }
+            else
+            {
+                return "1";
+            }
+
+        }
+
+        
+
         private Fs.FsBase CreateElFinderFsItem(BaseFsEntry fsEntry)
         {
             if (fsEntry == null)
@@ -187,18 +258,48 @@ namespace ElFinder.Connector.Volume
             {
 
                 var file = fsEntry as FileEntry;
-                return new Fs.FsFile
+                if (IsImage(mimeType))
                 {
-                    Hash = GetHash(file.Path),
-                    Locked = 0,
-                    Mime = mimeType,
-                    Name = file.Name,
-                    ParentHash = GetHash(file.ParentPath),
-                    Read = file.CanRead ? 1 : 0,
-                    Size = file.Size,
-                    Timestamp = file.LastModified.ToUnixTimeSeconds(),
-                    Write = file.CanWrite ? 1 : 0
-                };
+
+                    var (stream, filename) = GetFile(GetHash(file.Path));
+
+                    using (stream)
+                    using (var image = ElFinder.ImageProcessor.Load(stream))
+                    {
+
+                        
+
+                        return new Fs.FsImageFile
+                        {
+                            Hash = GetHash(file.Path),
+                            Locked = 0,
+                            Mime = mimeType,
+                            Name = file.Name,
+                            ParentHash = GetHash(file.ParentPath),
+                            Read = file.CanRead ? 1 : 0,
+                            Size = file.Size,
+                            Timestamp = file.LastModified.ToUnixTimeSeconds(),
+                            Write = file.CanWrite ? 1 : 0,
+                            Tmb = GetTmb(stream, filename),
+                            Deminisation = image.GetDeminisation()
+                        };
+                    }
+                }
+                else
+                {
+                    return new Fs.FsFile
+                    {
+                        Hash = GetHash(file.Path),
+                        Locked = 0,
+                        Mime = mimeType,
+                        Name = file.Name,
+                        ParentHash = GetHash(file.ParentPath),
+                        Read = file.CanRead ? 1 : 0,
+                        Size = file.Size,
+                        Timestamp = file.LastModified.ToUnixTimeSeconds(),
+                        Write = file.CanWrite ? 1 : 0
+                    };
+                }
             }
             else {
                 var directory = fsEntry as DirectoryEntry;
@@ -213,7 +314,7 @@ namespace ElFinder.Connector.Volume
                         Locked = 1,
                         Mime = mimeType,
                         Name = directory.Name,
-                        Options = new Fs.RootOptions(),
+                        Options = Options,
                         ParentHash = GetHash(directory.ParentPath),
                         Read = directory.CanRead ? 1 : 0,
                         Timestamp = directory.LastModified.ToUnixTimeSeconds(),

@@ -16,7 +16,7 @@ namespace ElFinder.Connector.Command
         [JsonProperty("files")]
         public Fs.FsBase[] Files { get; set; }
 
-        [JsonProperty("uplMaxFile ")]
+        [JsonProperty("uplMaxFile")]
         public int UplMaxFile { get; set; }
 
         [JsonProperty("uplMaxSize")]

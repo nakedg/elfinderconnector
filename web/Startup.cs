@@ -37,12 +37,18 @@ namespace web
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             var rootPathElfinder = System.IO.Path.Combine(Environment.WebRootPath, "files");
+            var tmbPath = System.IO.Path.Combine(Environment.WebRootPath, "tmb");
 
             services
                 .AddElFinderDefaultFactory(options => {
                     options.Volumes = new Volume[] {
                          new Volume(new FsVolumeDriver(rootPathElfinder))
+                         {
+                             ThumbnailPath = tmbPath
+                         }
                     };
+
+                    options.TmbPath = tmbPath;
                 })
                 .AddElFinderConnector(options => {
                     options.ConnectorUrl = "/connector";

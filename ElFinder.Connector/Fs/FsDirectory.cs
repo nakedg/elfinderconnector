@@ -53,8 +53,8 @@ namespace ElFinder.Connector.Fs
         /// <summary>
         /// Thumbnails folder URL
         /// </summary>
-        [JsonProperty("tmbURL")]
-        public string TmbUrl { get; set; } = "self";
+        [JsonProperty("tmbUrl")]
+        public string TmbUrl { get; set; } = "/tmb/";
 
         /// <summary>
         /// Path separator for the current volume
@@ -137,7 +137,7 @@ namespace ElFinder.Connector.Fs
         /// Is enabled i18n folder name that convert name to elFinderInstance.messages['folder_'+name]
         /// </summary>
         [JsonProperty("i18nFolderName")]
-        public int I18nFolderName { get; set; } = 0;
+        public int I18nFolderName { get; set; } = 1;
 
         [JsonProperty("substituteImg")]
         public bool SubstituteImg { get; set; } = true;

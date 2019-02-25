@@ -4,6 +4,7 @@ using System.Text;
 using ElFinder.Connector.Volume;
 using System.Linq;
 using ElFinder.Connector.Models;
+using ElFinder.Connector.Image;
 
 namespace ElFinder.Connector
 {
@@ -16,7 +17,18 @@ namespace ElFinder.Connector
             };*/
         }
 
-        public Volume.Volume[] Volumes { get; set; }
+        private Volume.Volume[] _volumes;
+        public Volume.Volume[] Volumes
+        {
+            get { return _volumes; }
+            set {
+                foreach (var item in value)
+                {
+                    item.ElFinder = this;
+                }
+                _volumes = value;
+            }
+        }
 
         public Volume.Volume Default
         {
@@ -39,5 +51,7 @@ namespace ElFinder.Connector
             }
             return Volumes.FirstOrDefault(v => hash.StartsWith(v.VolumeId));
         }
+
+        public IImageProcessor ImageProcessor { get; set; }
     }
 }

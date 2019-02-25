@@ -28,6 +28,7 @@ bld/
 #wwwroot/
 **/*/wwwroot/lib
 **/*/wwwroot/files
+**/*/wwwroot/tmb
 
 # MSTest test Results
 [Tt]est[Rr]esult*/

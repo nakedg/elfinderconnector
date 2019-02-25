@@ -28,6 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.Configure(options);
+            services.AddSingleton<ElFinder.Connector.Image.IImageProcessor, ElFinder.Connector.Image.ImageSharp.ImageSharpImageProcessor>();
             services.AddSingleton<IElFinderFactory, DefaultElFinderFactory>();
 
             return services;
