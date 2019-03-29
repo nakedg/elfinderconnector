@@ -3,6 +3,10 @@ elfinder connector for .Net core
 
 Implement connetor for elfinder 2.1.
 
+Install with Nuget:
+
+	Install-Package Nakedg.ElFinder.Connector -Version 0.0.4
+
 Use example
 Config file or user secrets example
 
