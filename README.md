@@ -11,11 +11,15 @@ Use example
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 			
 	    var rootPathElfinder = System.IO.Path.Combine(Environment.WebRootPath, "files");
+	    var tmbPath = System.IO.Path.Combine(Environment.WebRootPath, "tmb");
 			
             services
                 .AddElFinderDefaultFactory(options => {
                     options.Volumes = new Volume[] {
                          new Volume(new FsVolumeDriver(rootPathElfinder))
+                         {
+                             ThumbnailPath = tmbPath
+                         }
                     };
                 })
                 .AddElFinderConnector(options => {
@@ -47,7 +51,8 @@ Use example
 Partially implement driver for local file system
 	
 It is planned to implement a driver for the yandex disk
- 
+
+For image resize used library https://github.com/SixLabors/ImageSharp
  
  Реализован еще не весь api.
  Реализованные команды:
@@ -61,3 +66,4 @@ It is planned to implement a driver for the yandex disk
  8. rename
  9. rm
  10. size
+ 11. tmb
