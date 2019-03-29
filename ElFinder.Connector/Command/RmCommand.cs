@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.ResponseWriter;
 
 namespace ElFinder.Connector.Command
@@ -21,7 +22,7 @@ namespace ElFinder.Connector.Command
             Targets = CmdParams.GetValues("targets[]");
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             List<string> successfullyRemoved = new List<string>();
 
@@ -30,7 +31,7 @@ namespace ElFinder.Connector.Command
                 var volume = ElFinder.GetVolume(target);
                 try
                 {
-                    volume.Delete(target);
+                    await volume.Delete(target);
                     successfullyRemoved.Add(target);
                 }
                 catch (Exception e)

@@ -9,8 +9,16 @@ namespace ElFinder.Connector.Image.ImageSharp
     {
         public IImg Load(Stream stream)
         {
-            stream.Seek(0, SeekOrigin.Begin);
-            return new ImageSharpImage<SixLabors.ImageSharp.PixelFormats.Rgba32>(SixLabors.ImageSharp.Image.Load(stream));
+            try
+            {
+                stream.Seek(0, SeekOrigin.Begin);
+
+                return new ImageSharpImage<SixLabors.ImageSharp.PixelFormats.Rgba32>(SixLabors.ImageSharp.Image.Load(stream));
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

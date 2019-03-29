@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.ResponseWriter;
 
 namespace ElFinder.Connector.Command
@@ -22,14 +23,14 @@ namespace ElFinder.Connector.Command
             Targets = CmdParams.GetValues("targets[]");
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             Dictionary<string, string> images = new Dictionary<string, string>();
 
             foreach (var target in Targets)
             {
                 var volume = ElFinder.GetVolume(target);
-                var (stream, filename) = volume.GetFile(target);
+                var (stream, filename) = await volume.GetFile(target);
                 using (stream)
                 {
                     var tmbName = volume.CreateTmb(stream, filename);

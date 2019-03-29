@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Text;
 using ElFinder.Connector.ResponseWriter;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ElFinder.Connector.Command
 {
@@ -25,7 +26,7 @@ namespace ElFinder.Connector.Command
 
         protected abstract void InitCommand();
 
-        public abstract IResponseWriter Execute();
+        public abstract Task<IResponseWriter> Execute();
 
         protected bool ParseBoolParameter(string value)
         {

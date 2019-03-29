@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.ResponseWriter;
 using ElFinder.Connector.Volume;
 
@@ -23,7 +24,7 @@ namespace ElFinder.Connector.Command
             Targets = ParseDict("targets", CmdParams);
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             Dictionary<string, FsItemSize> result = new Dictionary<string, FsItemSize>();
 
@@ -34,7 +35,7 @@ namespace ElFinder.Connector.Command
             foreach (var item in Targets.Values)
             {
                 var volume = ElFinder.GetVolume(item);
-                var size = volume.GetSize(item);
+                var size = await volume.GetSize(item);
                 result.Add(item, size);
                 TotalDirectoryCount += size.DirectoryCount;
                 TotalFileCount += size.FileCount;

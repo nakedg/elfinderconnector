@@ -36,6 +36,11 @@ namespace web
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            var yaDiskUrl = Configuration.GetValue<string>("yaDiskConfig:url");
+            var yaDiskLogin = Configuration.GetValue<string>("yaDiskConfig:login");
+            var yaDiskPassword = Configuration.GetValue<string>("yaDiskConfig:password");
+            var yaDiskRootPath = Configuration.GetValue<string>("yaDiskConfig:rootPath");
+
             var rootPathElfinder = System.IO.Path.Combine(Environment.WebRootPath, "files");
             var tmbPath = System.IO.Path.Combine(Environment.WebRootPath, "tmb");
 
@@ -45,23 +50,15 @@ namespace web
                          new Volume(new FsVolumeDriver(rootPathElfinder))
                          {
                              ThumbnailPath = tmbPath
+                         },
+                         new Volume(new YaDiskVolumeDriver(yaDiskUrl, yaDiskLogin, yaDiskPassword, yaDiskRootPath)) {
+                             ThumbnailPath = tmbPath,
                          }
                     };
-
-                    options.TmbPath = tmbPath;
                 })
                 .AddElFinderConnector(options => {
                     options.ConnectorUrl = "/connector";
                 });
-
-            services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(p =>
-                {
-                    p.WithOrigins("http://localhost:8080").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
-                    //p.AllowAnyHeader().AllowAnyMethod().WithOrigins("localhost:8080");
-                });
-            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -75,8 +72,6 @@ namespace web
             {
                 app.UseExceptionHandler("/Home/Error");
             }
-
-            app.UseCors();
 
             app.UseStaticFiles();
             app.UseCookiePolicy();

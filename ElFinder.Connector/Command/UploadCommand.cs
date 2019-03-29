@@ -5,6 +5,7 @@ using System.Text;
 using ElFinder.Connector.ResponseWriter;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ElFinder.Connector.Command
 {
@@ -49,11 +50,11 @@ namespace ElFinder.Connector.Command
             Range = CmdParams.Get("range");
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             if (IsChunkUpload())
             {
-                return ChunkUpload();
+                return await ChunkUpload();
             }
             var volume = ElFinder.GetVolume(Target);
 
@@ -65,13 +66,13 @@ namespace ElFinder.Connector.Command
                 var hashPath = UploadPaths != null && UploadPaths.Length > i ? UploadPaths[i] : Target;
                 System.IO.MemoryStream ms = new System.IO.MemoryStream((int)file.Length);
                 file.CopyTo(ms);
-                uploadedFiles.Add(volume.Upload(hashPath, file.FileName, ms));
+                uploadedFiles.Add(await volume.Upload(hashPath, file.FileName, ms));
             }
 
             return new JsonResponseWriter(new { added = uploadedFiles.ToArray() });
         }
 
-        private IResponseWriter ChunkUpload()
+        private async Task<IResponseWriter> ChunkUpload()
         {
             System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"^(.*).(\d+)_(\d+).part$");
             var match = regex.Match(Chunk);
@@ -110,7 +111,7 @@ namespace ElFinder.Connector.Command
                 var item = chunkStorage[Chunk];
                 chunkStorage.Remove(Chunk);
 
-                var added = volume.Upload(hashPath, Chunk, item.Stream);
+                var added = await volume.Upload(hashPath, Chunk, item.Stream);
 
                 return new JsonResponseWriter(new { added = new Fs.FsBase[] { added } });
             }

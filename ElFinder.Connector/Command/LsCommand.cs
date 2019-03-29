@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Text;
 using ElFinder.Connector.ResponseWriter;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ElFinder.Connector.Command
 {
@@ -25,10 +26,10 @@ namespace ElFinder.Connector.Command
             Intersect = CmdParams.GetValues("intersect[]") ?? new string[0];
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             var volume = ElFinder.GetVolume(Target);
-            var items = volume.GetDirectoryItems(Target);
+            var items = await volume.GetDirectoryItems(Target);
 
             Dictionary<string, string> result = new Dictionary<string, string>();
 

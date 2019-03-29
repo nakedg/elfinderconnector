@@ -5,7 +5,7 @@ using System.Text;
 using System.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-
+using System.Threading.Tasks;
 
 namespace ElFinder.Connector.Volume
 {
@@ -47,54 +47,56 @@ namespace ElFinder.Connector.Volume
             {
                 if (_root == null)
                 {
-                    _root = (Fs.FsRoot)GetCurrentWorkingDirectory(GetHash(""));
+                    _root = (Fs.FsRoot)Task.Run(() => GetCurrentWorkingDirectory(GetHash(""))).GetAwaiter().GetResult();
+                    /*var awaiter = GetCurrentWorkingDirectory(GetHash("")).GetAwaiter();
+                    _root = (Fs.FsRoot)awaiter.GetResult();*/
                 }
 
                 return _root;
             }
         }
 
-        public Fs.FsBase GetCurrentWorkingDirectory(string hash)
+        public async Task<Fs.FsBase> GetCurrentWorkingDirectory(string hash)
         {
             CheckVolumeIdInHash(hash);
             
-            var cwd = _volumeDriver.GetCurrentWorkingDirectory(GetPath(hash));
+            var cwd = await _volumeDriver.GetCurrentWorkingDirectory(GetPath(hash));
 
-            return CreateElFinderFsItem(cwd);
+            return await CreateElFinderFsItem(cwd);
            
         }
 
-        public Fs.FsBase[] GetDirectoryItems(string hash)
+        public async Task<Fs.FsBase[]> GetDirectoryItems(string hash)
         {
             CheckVolumeIdInHash(hash);
 
-            var items = _volumeDriver.GetDirectoryItems(GetPath(hash));
+            var items = await _volumeDriver.GetDirectoryItems(GetPath(hash));
 
             List<Fs.FsBase> result = new List<Fs.FsBase>(items.Length);
 
             foreach (var item in items)
             {
-                result.Add(CreateElFinderFsItem(item));
+                result.Add(await CreateElFinderFsItem(item));
             }
 
             return result.ToArray();
         }
 
-        public Fs.FsDirectory CreateDirectory(string hash, string name)
+        public async Task<Fs.FsDirectory> CreateDirectory(string hash, string name)
         {
             CheckVolumeIdInHash(hash);
 
-            return (Fs.FsDirectory)CreateElFinderFsItem(_volumeDriver.CreateDirectory(GetPath(hash), name));
+            return (Fs.FsDirectory) await CreateElFinderFsItem(await _volumeDriver.CreateDirectory(GetPath(hash), name));
         }
 
-        public (System.IO.Stream, string) GetFile(string hash)
+        public async Task<(System.IO.Stream, string)> GetFile(string hash)
         {
             CheckVolumeIdInHash(hash);
 
-            return _volumeDriver.GetFile(GetPath(hash));
+            return await _volumeDriver.GetFile(GetPath(hash));
         }
 
-        public Fs.FsBase[] GetParents(string hash, string until)
+        public async Task<Fs.FsBase[]> GetParents(string hash, string until)
         {
             CheckVolumeIdInHash(hash);
 
@@ -105,39 +107,39 @@ namespace ElFinder.Connector.Volume
                 untilPath = GetPath(until);
             }
 
-            var items = _volumeDriver.GetParents(GetPath(hash), untilPath);
+            var items = await _volumeDriver.GetParents(GetPath(hash), untilPath);
 
-            return items.Select(i => CreateElFinderFsItem(i)).ToArray();
+            return items.Select(async i => await CreateElFinderFsItem(i)).Select(t => t.Result).ToArray();
         }
 
-        public Fs.FsBase Upload(string hashPath, string name, System.IO.Stream stream)
+        public async Task<Fs.FsBase> Upload(string hashPath, string name, System.IO.Stream stream)
         {
             CheckVolumeIdInHash(hashPath);
 
-            return CreateElFinderFsItem(_volumeDriver.Upload(GetPath(hashPath), name, stream));
+            return await CreateElFinderFsItem(await _volumeDriver.Upload(GetPath(hashPath), name, stream));
         }
 
-        public Fs.FsBase Rename(string hash, string newName)
+        public async Task<Fs.FsBase> Rename(string hash, string newName)
         {
             CheckVolumeIdInHash(hash);
 
-            var added = _volumeDriver.Rename(GetPath(hash), newName);
+            var added = await _volumeDriver.Rename(GetPath(hash), newName);
 
-            return CreateElFinderFsItem(added);
+            return await CreateElFinderFsItem(added);
         }
 
-        public void Delete(string hash)
+        public async Task Delete(string hash)
         {
             CheckVolumeIdInHash(hash);
 
-            _volumeDriver.Delete(GetPath(hash));
+            await _volumeDriver.Delete(GetPath(hash));
         }
 
-        public FsItemSize GetSize(string hash)
+        public async Task<FsItemSize> GetSize(string hash)
         {
             CheckVolumeIdInHash(hash);
 
-            return _volumeDriver.GetSize(GetPath(hash));
+            return await _volumeDriver.GetSize(GetPath(hash));
         }
 
         public string CreateTmb(System.IO.Stream stream, string filename)
@@ -148,17 +150,24 @@ namespace ElFinder.Connector.Volume
             }
 
             string md5 = GetMD5(stream);
-            string tmbName = $"{md5}{System.IO.Path.GetExtension(filename)}";
+            
 
             using (var image = ElFinder.ImageProcessor.Load(stream))
-            using (var ms = image.Resize(80, 80))
-            using (System.IO.FileStream fs = new System.IO.FileStream(System.IO.Path.Combine(ThumbnailPath, tmbName), System.IO.FileMode.Create))
+            
             {
-                ms.Seek(0, System.IO.SeekOrigin.Begin);
+                var deminisation = image.GetDeminisation();
 
-                ms.CopyTo(fs);
+                string tmbName = $"{md5}_{deminisation}{System.IO.Path.GetExtension(filename)}";
 
-                return tmbName;
+                using (var ms = image.Resize(80, 80))
+                using (System.IO.FileStream fs = new System.IO.FileStream(System.IO.Path.Combine(ThumbnailPath, tmbName), System.IO.FileMode.Create))
+                {
+                    ms.Seek(0, System.IO.SeekOrigin.Begin);
+
+                    ms.CopyTo(fs);
+
+                    return tmbName;
+                }
             }
         }
 
@@ -211,17 +220,9 @@ namespace ElFinder.Connector.Volume
             }
         }
 
-        private string GetMD5(System.IO.Stream data)
-        {
-            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
-            {
-                data.Seek(0, System.IO.SeekOrigin.Begin);
-                var hash = md5.ComputeHash(data);
-                return BitConverter.ToString(hash).Replace("-", "");
-            }
-        }
+        
 
-        private string GetTmb(System.IO.Stream stream, string filename)
+        private string GetTmb(string md5)
         {
             if (!System.IO.Directory.Exists(ThumbnailPath))
             {
@@ -229,8 +230,22 @@ namespace ElFinder.Connector.Volume
                 return "1";
             }
 
-            string md5 = GetMD5(stream);
-            string tmbName = $"{md5}{System.IO.Path.GetExtension(filename)}";
+            System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(ThumbnailPath);
+
+            var serarchPattern = $"{md5}*";
+
+            var files = di.GetFiles(serarchPattern);
+
+            if (files.Length > 0)
+            {
+                return files[0].Name;
+            }
+            else
+            {
+                return "1";
+            }
+
+            /*string tmbName = $"{md5}{System.IO.Path.GetExtension(filename)}";
 
             if (System.IO.File.Exists(System.IO.Path.Combine(ThumbnailPath, tmbName)))
             {
@@ -239,13 +254,13 @@ namespace ElFinder.Connector.Volume
             else
             {
                 return "1";
-            }
+            }*/
 
         }
 
         
 
-        private Fs.FsBase CreateElFinderFsItem(BaseFsEntry fsEntry)
+        private  Task<Fs.FsBase> CreateElFinderFsItem(BaseFsEntry fsEntry)
         {
             if (fsEntry == null)
             {
@@ -260,34 +275,44 @@ namespace ElFinder.Connector.Volume
                 var file = fsEntry as FileEntry;
                 if (IsImage(mimeType))
                 {
+                    var tmb = GetTmb(file.Md5Hash);
+                    string deminisation = string.Empty;
 
-                    var (stream, filename) = GetFile(GetHash(file.Path));
+                    System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"_(\d*x\d*)");
+                    var m = regex.Match(tmb);
 
-                    using (stream)
-                    using (var image = ElFinder.ImageProcessor.Load(stream))
+                    if (m.Success)
                     {
-
-                        
-
-                        return new Fs.FsImageFile
-                        {
-                            Hash = GetHash(file.Path),
-                            Locked = 0,
-                            Mime = mimeType,
-                            Name = file.Name,
-                            ParentHash = GetHash(file.ParentPath),
-                            Read = file.CanRead ? 1 : 0,
-                            Size = file.Size,
-                            Timestamp = file.LastModified.ToUnixTimeSeconds(),
-                            Write = file.CanWrite ? 1 : 0,
-                            Tmb = GetTmb(stream, filename),
-                            Deminisation = image.GetDeminisation()
-                        };
+                        deminisation = m.Groups[1].Value;
                     }
+
+
+                    return Task.FromResult<Fs.FsBase>(new Fs.FsImageFile
+                    {
+                        Hash = GetHash(file.Path),
+                        Locked = 0,
+                        Mime = mimeType,
+                        Name = file.Name,
+                        ParentHash = GetHash(file.ParentPath),
+                        Read = file.CanRead ? 1 : 0,
+                        Size = file.Size,
+                        Timestamp = file.LastModified.ToUnixTimeSeconds(),
+                        Write = file.CanWrite ? 1 : 0,
+                        Tmb = tmb,
+                        Deminisation = deminisation
+
+                    });
+                    //var (stream, filename) = await GetFile(GetHash(file.Path));
+
+                    // using (stream)
+                    //using (var image = ElFinder.ImageProcessor.Load(stream))
+                    //{
+
+                    //}
                 }
                 else
                 {
-                    return new Fs.FsFile
+                    return Task.FromResult<Fs.FsBase>(new Fs.FsFile
                     {
                         Hash = GetHash(file.Path),
                         Locked = 0,
@@ -298,7 +323,7 @@ namespace ElFinder.Connector.Volume
                         Size = file.Size,
                         Timestamp = file.LastModified.ToUnixTimeSeconds(),
                         Write = file.CanWrite ? 1 : 0
-                    };
+                    });
                 }
             }
             else {
@@ -307,7 +332,7 @@ namespace ElFinder.Connector.Volume
                 if (directory.Path == string.Empty)
                 {
                     //Root
-                    return new Fs.FsRoot
+                    return Task.FromResult<Fs.FsBase>(new Fs.FsRoot
                     {
                         HasDirs = directory.HasSubDirectories ? 1 : 0,
                         Hash = GetHash(directory.Path),
@@ -320,11 +345,11 @@ namespace ElFinder.Connector.Volume
                         Timestamp = directory.LastModified.ToUnixTimeSeconds(),
                         VolimeId = VolumeId,
                         Write = directory.CanWrite ? 1 : 0
-                    };
+                    });
                 }
                 else
                 {
-                    return new Fs.FsDirectory
+                    return Task.FromResult<Fs.FsBase>(new Fs.FsDirectory
                     {
                         HasDirs = directory.HasSubDirectories ? 1 : 0,
                         Hash = GetHash(directory.Path),
@@ -336,8 +361,18 @@ namespace ElFinder.Connector.Volume
                         Timestamp = directory.LastModified.ToUnixTimeSeconds(),
                         VolimeId = VolumeId,
                         Write = directory.CanWrite ? 1 : 0
-                    };
+                    });
                 }
+            }
+        }
+
+        private string GetMD5(System.IO.Stream data)
+        {
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                data.Seek(0, System.IO.SeekOrigin.Begin);
+                var hash = md5.ComputeHash(data);
+                return BitConverter.ToString(hash).Replace("-", "");
             }
         }
     }

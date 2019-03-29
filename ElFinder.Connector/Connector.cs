@@ -51,7 +51,7 @@ namespace ElFinder.Connector
 
             var elFinder = _elFinderFactory.Create();
             var cmd = Command.CommandFactory.CreateCommand(cmdName, values, elFinder, files);
-            var result = cmd.Execute();
+            var result = await cmd.Execute();
             await result.WriteAsync(context);
         }
     }

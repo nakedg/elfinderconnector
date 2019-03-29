@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.ResponseWriter;
 
 namespace ElFinder.Connector.Command
@@ -27,11 +28,11 @@ namespace ElFinder.Connector.Command
             CookiePath = CmdParams.Get("cpath");
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             var volume = ElFinder.GetVolume(Target);
 
-            var (stream, filename) = volume.GetFile(Target);
+            var (stream, filename) = await volume.GetFile(Target);
 
             return new FileResponseWriter(stream, filename);
         }

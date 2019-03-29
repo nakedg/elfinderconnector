@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.ResponseWriter;
 
 namespace ElFinder.Connector.Command
@@ -25,11 +26,11 @@ namespace ElFinder.Connector.Command
             NewName = CmdParams.Get("name");
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             var volume = ElFinder.GetVolume(Target);
 
-            var added = volume.Rename(Target, NewName);
+            var added = await volume.Rename(Target, NewName);
 
             return new JsonResponseWriter(new { added = new Fs.FsBase[] { added }, removed = new string[] { Target } });
         }

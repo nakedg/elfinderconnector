@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.Models;
 using ElFinder.Connector.Volume;
 
@@ -34,19 +35,25 @@ namespace ElFinder.Connector.Command
             }
         }
 
-        public override ResponseWriter.IResponseWriter Execute()
+        public override async Task<ResponseWriter.IResponseWriter> Execute()
         {
             OpenCommandResult result = new OpenCommandResult();
 
             var volume = ElFinder.GetVolume(Target);
-            Fs.FsBase cwd = volume?.GetCurrentWorkingDirectory(Target);
+
+            Fs.FsBase cwd = null;
+            if (volume != null)
+            {
+                cwd = await volume.GetCurrentWorkingDirectory(Target);
+            }
+            
             string hash = Init ? "default folder" : "#" + Target;
 
             if ((cwd == null || !(cwd.Read == 1)) && Init)
             {
                 volume = ElFinder.Default;
                 Target = volume.DefaultPath;
-                cwd = volume.GetCurrentWorkingDirectory(Target);
+                cwd = await volume.GetCurrentWorkingDirectory(Target);
             }
 
             if (Init)
@@ -57,7 +64,7 @@ namespace ElFinder.Connector.Command
             List<Fs.FsBase> files = new List<Fs.FsBase>();
 
             result.Cwd = cwd;
-            files.AddRange(volume.GetDirectoryItems(Target));
+            files.AddRange(await volume.GetDirectoryItems(Target));
             result.UplMaxSize = "1M";
             result.UplMaxFile = 3;
 

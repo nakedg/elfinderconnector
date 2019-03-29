@@ -1,4 +1,5 @@
 ﻿using ElFinder.Connector.Models;
+using System.Threading.Tasks;
 
 namespace ElFinder.Connector.Volume
 {
@@ -8,18 +9,18 @@ namespace ElFinder.Connector.Volume
 
         string Prefix { get; set; }
 
-        DirectoryEntry GetCurrentWorkingDirectory(string path);
-        BaseFsEntry[] GetDirectoryItems(string path);
-        DirectoryEntry CreateDirectory(string path, string name);
-        (System.IO.Stream, string) GetFile(string path);
-        BaseFsEntry[] GetParents(string path, string untilPath);
+        Task<DirectoryEntry> GetCurrentWorkingDirectory(string path);
+        Task<BaseFsEntry[]> GetDirectoryItems(string path);
+        Task<DirectoryEntry> CreateDirectory(string path, string name);
+        Task<(System.IO.Stream, string)> GetFile(string path);
+        Task<BaseFsEntry[]> GetParents(string path, string untilPath);
 
-        BaseFsEntry Upload(string path, string name, System.IO.Stream stream);
+        Task<BaseFsEntry> Upload(string path, string name, System.IO.Stream stream);
 
-        BaseFsEntry Rename(string path, string newName);
+        Task<BaseFsEntry> Rename(string path, string newName);
 
-        void Delete(string path);
+        Task Delete(string path);
 
-        FsItemSize GetSize(string path);
+        Task<FsItemSize> GetSize(string path);
     }
 }

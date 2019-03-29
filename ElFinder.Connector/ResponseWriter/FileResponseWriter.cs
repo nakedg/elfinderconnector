@@ -39,6 +39,7 @@ namespace ElFinder.Connector.ResponseWriter
 
             if (Stream.CanSeek)
             {
+                Stream.Seek(0, System.IO.SeekOrigin.Begin);
                 context.Response.ContentLength = Stream.Length;
             }
 

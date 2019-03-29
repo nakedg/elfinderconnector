@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.ResponseWriter;
 
 namespace ElFinder.Connector.Command
@@ -22,11 +23,11 @@ namespace ElFinder.Connector.Command
             Target = CmdParams.Get("target");
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             var volume = ElFinder.GetVolume(Target);
              
-            var items = volume.GetDirectoryItems(Target);
+            var items = await volume.GetDirectoryItems(Target);
 
             return new JsonResponseWriter(new { tree = items.OfType<Fs.FsDirectory>().ToArray() });
         }

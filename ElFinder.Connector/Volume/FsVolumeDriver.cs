@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using ElFinder.Connector.Models;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace ElFinder.Connector.Volume
 {
@@ -29,7 +30,7 @@ namespace ElFinder.Connector.Volume
 
         public string Root { get; set; }
 
-        public DirectoryEntry GetCurrentWorkingDirectory(string path)
+        public Task<DirectoryEntry> GetCurrentWorkingDirectory(string path)
         {
             string fullPath = GetFullPath(path);// Path.Combine(Root, path);
 
@@ -39,7 +40,7 @@ namespace ElFinder.Connector.Volume
 
                 var cwd = Convert(di);
 
-                return cwd;
+                return Task.FromResult(cwd);
             }
             else
             {
@@ -48,7 +49,7 @@ namespace ElFinder.Connector.Volume
         }
 
 
-        public BaseFsEntry[] GetDirectoryItems(string path)
+        public Task<BaseFsEntry[]> GetDirectoryItems(string path)
         {
             string fullPath = GetFullPath(path);// Path.Combine(Root, path);
 
@@ -78,7 +79,7 @@ namespace ElFinder.Connector.Volume
                         baseEntrys.Add(file);
                     }
                 }
-                return baseEntrys.ToArray();
+                return Task.FromResult(baseEntrys.ToArray());
             }
             else
             {
@@ -87,7 +88,7 @@ namespace ElFinder.Connector.Volume
             
         }
 
-        public DirectoryEntry CreateDirectory(string path, string name)
+        public Task<DirectoryEntry> CreateDirectory(string path, string name)
         {
             var currentDirectoryPath = GetFullPath(path);
 
@@ -109,14 +110,13 @@ namespace ElFinder.Connector.Volume
             }
         }
 
-        public (Stream, string) GetFile(string path)
+        public Task<(Stream, string)> GetFile(string path)
         {
             var fullPath = GetFullPath(path);
 
             if (File.Exists(fullPath))
             {
-                return (File.OpenRead(fullPath), Path.GetFileName(fullPath));
-              
+                return Task.FromResult( ((Stream, string))(File.OpenRead(fullPath), Path.GetFileName(fullPath)) );
             }
             else
             {
@@ -124,7 +124,7 @@ namespace ElFinder.Connector.Volume
             }
         }
 
-        public BaseFsEntry[] GetParents(string path, string untilPath)
+        public Task<BaseFsEntry[]> GetParents(string path, string untilPath)
         {
             var fullpath = GetFullPath(path);
 
@@ -176,10 +176,10 @@ namespace ElFinder.Connector.Volume
             }
 
 
-            return result.ToArray();
+            return Task.FromResult(result.ToArray());
         }
 
-        public BaseFsEntry Upload(string path, string name, System.IO.Stream stream)
+        public async Task<BaseFsEntry> Upload(string path, string name, Stream stream)
         {
             var fullpath = GetFullPath(path);
 
@@ -196,7 +196,7 @@ namespace ElFinder.Connector.Volume
             {
                 using (var fs = File.Create(filepath))
                 {
-                    stream.CopyTo(fs);
+                    await stream.CopyToAsync(fs);
                 }
             }
             else
@@ -211,7 +211,7 @@ namespace ElFinder.Connector.Volume
             return file;
         }
 
-        public BaseFsEntry Rename(string path, string newName)
+        public Task<BaseFsEntry> Rename(string path, string newName)
         {
             var fullpath = GetFullPath(path);
 
@@ -227,7 +227,7 @@ namespace ElFinder.Connector.Volume
                 fi.MoveTo(newFullpath);
 
                 FileInfo newFi = new FileInfo(newFullpath);
-                return Convert(newFi);
+                return Task.FromResult((BaseFsEntry)Convert(newFi));
             }
             else if (Directory.Exists(fullpath))
             {
@@ -240,7 +240,7 @@ namespace ElFinder.Connector.Volume
 
                 var newDi = new DirectoryInfo(newPath);
 
-                return Convert(newDi);
+                return Task.FromResult((BaseFsEntry)Convert(newDi));
             }
             else
             {
@@ -248,7 +248,7 @@ namespace ElFinder.Connector.Volume
             }
         }
 
-        public void Delete(string path)
+        public Task Delete(string path)
         {
             var fullpath = GetFullPath(path);
 
@@ -265,16 +265,17 @@ namespace ElFinder.Connector.Volume
                 throw new FileNotFoundException("Directory or file not found", fullpath);
             }
 
+            return Task.CompletedTask;
         }
 
-        public FsItemSize GetSize(string path)
+        public Task<FsItemSize> GetSize(string path)
         {
             var fullpath = GetFullPath(path);
 
             if (File.Exists(fullpath))
             {
                 FileInfo fi = new FileInfo(fullpath);
-                return new FsItemSize { FileCount = 1, DirectoryCount = 0, Size = fi.Length };
+                return Task.FromResult(new FsItemSize { FileCount = 1, DirectoryCount = 0, Size = fi.Length });
             }
             else if (Directory.Exists(fullpath))
             {
@@ -287,7 +288,7 @@ namespace ElFinder.Connector.Volume
             }
         }
 
-        private FsItemSize CalculateDirectorySize(DirectoryInfo di)
+        private Task<FsItemSize> CalculateDirectorySize(DirectoryInfo di)
         {
             Stack<DirectoryInfo> stack = new Stack<DirectoryInfo>();
             stack.Push(di);
@@ -311,7 +312,7 @@ namespace ElFinder.Connector.Volume
                 }
             }
 
-            return result;
+            return Task.FromResult(result);
         }
 
         private string GetRelativePath(string relativeTo, string path)
@@ -338,6 +339,13 @@ namespace ElFinder.Connector.Volume
 
         private FileEntry Convert(FileInfo file)
         {
+            string md5hash;
+
+            using (var stream = file.OpenRead())
+            {
+                md5hash = GetMD5(stream);
+            }
+
             return new FileEntry
             {
                 CanRead = true,
@@ -346,7 +354,8 @@ namespace ElFinder.Connector.Volume
                 Path = GetRelativePath(Root, file.FullName),
                 ParentPath = GetRelativePath(Root, file.DirectoryName),
                 Size = file.Length,
-                LastModified = file.LastWriteTime
+                LastModified = file.LastWriteTime,
+                Md5Hash = md5hash
             };
         }
 
@@ -362,6 +371,16 @@ namespace ElFinder.Connector.Volume
                 ParentPath = GetRelativePath(Root, dir.Parent?.FullName),
                 LastModified = dir.LastWriteTime
             };
+        }
+
+        private string GetMD5(System.IO.Stream data)
+        {
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                data.Seek(0, SeekOrigin.Begin);
+                var hash = md5.ComputeHash(data);
+                return BitConverter.ToString(hash).Replace("-", "");
+            }
         }
 
     }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.ResponseWriter;
 
 namespace ElFinder.Connector.Command
@@ -25,11 +26,11 @@ namespace ElFinder.Connector.Command
             Until = CmdParams.Get("until");
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             var volume = ElFinder.GetVolume(Target);
 
-            var parents = volume.GetParents(Target, Until);
+            var parents = await volume.GetParents(Target, Until);
 
             return new JsonResponseWriter(new { tree = parents });
 

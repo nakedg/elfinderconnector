@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ElFinder.Connector.Command
 {
@@ -8,6 +9,6 @@ namespace ElFinder.Connector.Command
     {
         ElFinder ElFinder { get; }
         string Name { get; }
-        ResponseWriter.IResponseWriter Execute();
+        Task<ResponseWriter.IResponseWriter> Execute();
     }
 }

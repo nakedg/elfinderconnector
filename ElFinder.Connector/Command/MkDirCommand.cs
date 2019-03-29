@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
+using System.Threading.Tasks;
 using ElFinder.Connector.ResponseWriter;
 
 namespace ElFinder.Connector.Command
@@ -29,7 +30,7 @@ namespace ElFinder.Connector.Command
 
         }
 
-        public override IResponseWriter Execute()
+        public override async Task<IResponseWriter> Execute()
         {
             var result = new MkDirCommandResult();
 
@@ -39,7 +40,7 @@ namespace ElFinder.Connector.Command
             {
                 if (!string.IsNullOrEmpty(DirectoryName))
                 {
-                    var dir = volume.CreateDirectory(Target, DirectoryName);
+                    var dir = await volume.CreateDirectory(Target, DirectoryName);
                     result.Added = new Fs.FsDirectory[] { dir };
                 }
                 else
@@ -48,14 +49,14 @@ namespace ElFinder.Connector.Command
                     List<Fs.FsDirectory> dirs = new List<Fs.FsDirectory>();
                     foreach (var item in Dirs)
                     {
-                        var d = volume.CreateDirectory(Target, item);
+                        var d = await volume.CreateDirectory(Target, item);
                         dirs.Add(d);
                         result.Hashes.Add(item, d.Hash);
                     }
                     result.Added = dirs.ToArray();
                 }
 
-                result.Changed = new Fs.FsDirectory[] { (Fs.FsDirectory)volume.GetCurrentWorkingDirectory(Target) };
+                result.Changed = new Fs.FsDirectory[] { (Fs.FsDirectory) await volume.GetCurrentWorkingDirectory(Target) };
 
                 return new JsonResponseWriter(result);
             }
