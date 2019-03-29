@@ -4,11 +4,28 @@ elfinder connector for .Net core
 Implement connetor for elfinder 2.1.
 
 Use example
+Config file or user secrets example
+
+	{
+	  "yaDiskConfig": {
+	    "url": "https://webdav.yandex.ru",
+	    "login": "login",
+	    "password": "password",
+	    "rootPath":  "/yandexFiles"
+	  }
+	}
+
+
   In configure services:
         
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+			
+	    var yaDiskUrl = Configuration.GetValue<string>("yaDiskConfig:url");
+            var yaDiskLogin = Configuration.GetValue<string>("yaDiskConfig:login");
+            var yaDiskPassword = Configuration.GetValue<string>("yaDiskConfig:password");
+            var yaDiskRootPath = Configuration.GetValue<string>("yaDiskConfig:rootPath");
 			
 	    var rootPathElfinder = System.IO.Path.Combine(Environment.WebRootPath, "files");
 	    var tmbPath = System.IO.Path.Combine(Environment.WebRootPath, "tmb");
@@ -19,6 +36,9 @@ Use example
                          new Volume(new FsVolumeDriver(rootPathElfinder))
                          {
                              ThumbnailPath = tmbPath
+                         },
+                         new Volume(new YaDiskVolumeDriver(yaDiskUrl, yaDiskLogin, yaDiskPassword, yaDiskRootPath)) {
+                             ThumbnailPath = tmbPath,
                          }
                     };
                 })
@@ -48,14 +68,13 @@ Use example
         }
  
 	
-Partially implement driver for local file system
+Partially implement driver for local file system and yandex disk driver
 	
-It is planned to implement a driver for the yandex disk
 
-For image resize used library https://github.com/SixLabors/ImageSharp
+For image resize used library https://github.com/SixLabors/ImageSharp <br />
+For webdav access used library https://github.com/skazantsev/WebDavClient
  
- Реализован еще не весь api.
- Реализованные команды:
+ Implemented commands:
  1. open
  2. mkdir
  3. file
@@ -67,3 +86,5 @@ For image resize used library https://github.com/SixLabors/ImageSharp
  9. rm
  10. size
  11. tmb
+ 
+ For using example project, need retore clients libraries with libman (https://devblogs.microsoft.com/aspnet/library-manager-client-side-content-manager-for-web-apps/)
